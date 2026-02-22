@@ -1,7 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import '../constants/app_constants.dart';
 import '../di/injection.dart';
+import '../../features/auth/domain/repositories/auth_repository.dart';
+import '../../features/auth/presentation/bloc/auth_bloc.dart';
+import '../../features/auth/presentation/pages/login_page.dart';
 
 /// Role-based route names for redirect logic.
 enum AppRole { admin, client, photographer }
@@ -48,7 +52,10 @@ GoRouter createAppRouter() {
       GoRoute(
         path: AppConstants.routeLogin,
         name: 'login',
-        builder: (_, __) => const _PlaceholderPage(label: 'Login'),
+        builder: (_, __) => BlocProvider(
+          create: (_) => AuthBloc(getIt<AuthRepository>()),
+          child: const LoginPage(),
+        ),
       ),
       GoRoute(
         path: AppConstants.routeRegister,
