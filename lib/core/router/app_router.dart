@@ -3,10 +3,21 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import '../constants/app_constants.dart';
 import '../di/injection.dart';
+import '../../features/admin/presentation/pages/admin_dashboard_page.dart';
+import '../../features/admin/presentation/pages/admin_gallery_form_page.dart';
+import '../../features/admin/presentation/pages/admin_gallery_page.dart';
+import '../../features/admin/presentation/pages/admin_package_form_page.dart';
+import '../../features/admin/presentation/pages/admin_packages_page.dart';
+import '../../features/admin/presentation/pages/admin_users_page.dart';
+import '../../features/landing/domain/entities/gallery_image.dart';
+import '../../features/landing/domain/entities/package.dart';
 import '../../features/auth/domain/repositories/auth_repository.dart';
 import '../../features/auth/presentation/bloc/auth_bloc.dart';
 import '../../features/auth/presentation/pages/login_page.dart';
 import '../../features/auth/presentation/pages/register_page.dart';
+import '../../features/landing/domain/repositories/gallery_repository.dart';
+import '../../features/landing/domain/repositories/package_repository.dart';
+import '../../features/landing/presentation/bloc/landing_bloc.dart';
 import '../../features/landing/presentation/pages/landing_page.dart';
 
 /// Role-based route names for redirect logic.
@@ -49,7 +60,13 @@ GoRouter createAppRouter() {
       GoRoute(
         path: AppConstants.routeLanding,
         name: 'landing',
-        builder: (_, __) => const LandingPage(),
+        builder: (_, __) => BlocProvider(
+          create: (_) => LandingBloc(
+            packageRepository: getIt<PackageRepository>(),
+            galleryRepository: getIt<GalleryRepository>(),
+          )..add(const LandingLoadRequested()),
+          child: const LandingPage(),
+        ),
       ),
       GoRoute(
         path: AppConstants.routeLogin,
@@ -67,18 +84,57 @@ GoRouter createAppRouter() {
           child: const RegisterPage(),
         ),
       ),
-      GoRoute(
-        path: AppConstants.routeAdminDashboard,
-        name: 'admin',
-        builder: (_, __) => const _PlaceholderPage(label: 'Admin Dashboard'),
+      ShellRoute(
+        builder: (context, state, child) => BlocProvider(
+          create: (_) => AuthBloc(getIt<AuthRepository>()),
+          child: AdminDashboardPage(child: child),
+        ),
         routes: [
-          GoRoute(path: 'users', builder: (_, __) => const _PlaceholderPage(label: 'Admin Users')),
-          GoRoute(path: 'packages', builder: (_, __) => const _PlaceholderPage(label: 'Admin Packages')),
-          GoRoute(path: 'gallery', builder: (_, __) => const _PlaceholderPage(label: 'Admin Gallery')),
-          GoRoute(path: 'profile', builder: (_, __) => const _PlaceholderPage(label: 'Admin Profile')),
-          GoRoute(path: 'assignments', builder: (_, __) => const _PlaceholderPage(label: 'Admin Assignments')),
-          GoRoute(path: 'notifications', builder: (_, __) => const _PlaceholderPage(label: 'Admin Notifications')),
-          GoRoute(path: 'analysis', builder: (_, __) => const _PlaceholderPage(label: 'Admin Analysis')),
+          GoRoute(
+            path: '/admin',
+            redirect: (_, __) => AppConstants.routeAdminUsers,
+            routes: [
+              GoRoute(path: 'users', builder: (_, __) => const AdminUsersPage()),
+              GoRoute(
+                path: 'packages',
+                builder: (_, __) => const AdminPackagesPage(),
+                routes: [
+                  GoRoute(
+                    path: 'new',
+                    builder: (_, __) => const AdminPackageFormPage(),
+                  ),
+                  GoRoute(
+                    path: 'edit/:id',
+                    builder: (_, state) {
+                      final package = state.extra as Package?;
+                      return AdminPackageFormPage(package: package);
+                    },
+                  ),
+                ],
+              ),
+              GoRoute(
+                path: 'gallery',
+                builder: (_, __) => const AdminGalleryPage(),
+                routes: [
+                  GoRoute(
+                    path: 'new',
+                    builder: (_, __) => const AdminGalleryFormPage(),
+                  ),
+                  GoRoute(
+                    path: 'edit/:id',
+                    builder: (_, state) {
+                      final image = state.extra as GalleryImage?;
+                      return AdminGalleryFormPage(image: image);
+                    },
+                  ),
+                ],
+              ),
+              GoRoute(path: 'profile', builder: (_, __) => const _PlaceholderPage(label: 'Admin Profile')),
+              GoRoute(path: 'assignments', builder: (_, __) => const _PlaceholderPage(label: 'Admin Assignments')),
+              GoRoute(path: 'notifications', builder: (_, __) => const _PlaceholderPage(label: 'Admin Notifications')),
+              GoRoute(path: 'analysis', builder: (_, __) => const _PlaceholderPage(label: 'Admin Analysis')),
+            ],
+          ),
         ],
       ),
       GoRoute(
