@@ -6,6 +6,8 @@ import '../di/injection.dart';
 import '../../features/auth/domain/repositories/auth_repository.dart';
 import '../../features/auth/presentation/bloc/auth_bloc.dart';
 import '../../features/auth/presentation/pages/login_page.dart';
+import '../../features/auth/presentation/pages/register_page.dart';
+import '../../features/landing/presentation/pages/landing_page.dart';
 
 /// Role-based route names for redirect logic.
 enum AppRole { admin, client, photographer }
@@ -47,7 +49,7 @@ GoRouter createAppRouter() {
       GoRoute(
         path: AppConstants.routeLanding,
         name: 'landing',
-        builder: (_, __) => const _PlaceholderPage(label: 'Landing'),
+        builder: (_, __) => const LandingPage(),
       ),
       GoRoute(
         path: AppConstants.routeLogin,
@@ -60,7 +62,10 @@ GoRouter createAppRouter() {
       GoRoute(
         path: AppConstants.routeRegister,
         name: 'register',
-        builder: (_, __) => const _PlaceholderPage(label: 'Register'),
+        builder: (_, __) => BlocProvider(
+          create: (_) => AuthBloc(getIt<AuthRepository>()),
+          child: const RegisterPage(),
+        ),
       ),
       GoRoute(
         path: AppConstants.routeAdminDashboard,
